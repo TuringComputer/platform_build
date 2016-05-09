@@ -926,13 +926,18 @@ ifneq ($(strip $(TARGET_BOOTLOADER_CONFIG)),)
 BOOTLOADER_CROSS_TOOLCHAIN := `pwd`/prebuilts/gcc/linux-x86/arm/arm-eabi-4.6/bin/arm-eabi-
 BOOTLOADER_ENV := ARCH=arm CROSS_COMPILE=$(BOOTLOADER_CROSS_TOOLCHAIN)
 HOST_PROCESSOR := $(shell cat /proc/cpuinfo | grep processor | wc -l)
+ifneq ($(strip $(TARGET_BOOTLOADER_USE_SPL)),true)
 TARGET_BOOTLOADER_IMAGE := $(PRODUCT_OUT)/u-boot.imx
+else
+TARGET_BOOTLOADER_IMAGE := $(PRODUCT_OUT)/u-boot.img
+endif
 
 BOOTLOADER_PATH := bootable/bootloader/uboot-imx/
 BOOTLOADER_CONFIG_FILE := $(BOOTLOADER_PATH)/include/config.h
 
 bootloader: $(TARGET_BOOTLOADER_IMAGE)
 
+ifneq ($(strip $(TARGET_BOOTLOADER_USE_SPL)),true)
 $(TARGET_BOOTLOADER_IMAGE):
 	for ubootplat in $(TARGET_BOOTLOADER_CONFIG); do \
 		UBOOT_PLATFORM=`echo $$ubootplat | cut -d':' -f1`; \
@@ -945,6 +950,20 @@ $(TARGET_BOOTLOADER_IMAGE):
 		install -D bootable/bootloader/uboot-imx/u-boot.imx $(PRODUCT_OUT)/u-boot-$$UBOOT_PLATFORM.imx; \
 		install -D bootable/bootloader/uboot-imx/u-boot.imx $@; \
 	done
+else
+$(TARGET_BOOTLOADER_IMAGE):
+	for ubootplat in $(TARGET_BOOTLOADER_CONFIG); do \
+		UBOOT_PLATFORM=`echo $$ubootplat | cut -d':' -f1`; \
+		UBOOT_CONFIG=`echo $$ubootplat | cut -d':' -f2`; \
+        echo $(UBOOT_PLATFORM); \
+        echo $(UBOOT_CONFIG); \
+		$(MAKE) -C bootable/bootloader/uboot-imx/ distclean $(BOOTLOADER_ENV); \
+		$(MAKE) -C bootable/bootloader/uboot-imx/ $$UBOOT_CONFIG $(BOOTLOADER_ENV); \
+		$(MAKE) -C bootable/bootloader/uboot-imx/ $(BOOTLOADER_ENV); \
+		install -D bootable/bootloader/uboot-imx/u-boot.img $(PRODUCT_OUT)/u-boot-$$UBOOT_PLATFORM.img; \
+		install -D bootable/bootloader/uboot-imx/SPL $(PRODUCT_OUT)/SPL-$$UBOOT_PLATFORM; \
+	done
+endif	
 else
 bootloader:
 endif
