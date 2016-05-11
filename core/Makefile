@@ -937,6 +937,7 @@ BOOTLOADER_CONFIG_FILE := $(BOOTLOADER_PATH)/include/config.h
 
 bootloader: $(TARGET_BOOTLOADER_IMAGE)
 
+ifneq ($(strip $(SKIP_BOOTLOADER)),true)
 ifneq ($(strip $(TARGET_BOOTLOADER_USE_SPL)),true)
 $(TARGET_BOOTLOADER_IMAGE):
 	for ubootplat in $(TARGET_BOOTLOADER_CONFIG); do \
@@ -963,7 +964,11 @@ $(TARGET_BOOTLOADER_IMAGE):
 		install -D bootable/bootloader/uboot-imx/u-boot.img $(PRODUCT_OUT)/u-boot-$$UBOOT_PLATFORM.img; \
 		install -D bootable/bootloader/uboot-imx/SPL $(PRODUCT_OUT)/SPL-$$UBOOT_PLATFORM; \
 	done
-endif	
+endif
+else
+$(TARGET_BOOTLOADER_IMAGE):
+	echo "Skipping bootloader build."
+endif
 else
 bootloader:
 endif
@@ -984,6 +989,7 @@ KERNEL_OUT := $(TARGET_OUT_INTERMEDIATES)/KERNEL_OBJ
 .PHONY: $(TARGET_PREBUILT_KERNEL)
 kernelimage: $(TARGET_PREBUILT_KERNEL)
 
+ifneq ($(strip $(SKIP_KERNEL)),true)
 $(KERNEL_CONFIGURE): kernel_imx/arch/arm/configs/$(TARGET_KERNEL_DEFCONF)
 
 $(TARGET_KERNEL_CONFIGURE): kernel_imx/arch/arm/configs/$(TARGET_KERNEL_DEFCONF) $(KERNEL_CONFIGURE)
@@ -1000,6 +1006,10 @@ $(TARGET_PREBUILT_KERNEL): $(TARGET_KERNEL_CONFIGURE)
 		install -D kernel_imx/arch/arm/boot/dts/$$DTS_BOARD $(PRODUCT_OUT)/$$DTS_BOARD; \
 	done
 else
+$(TARGET_PREBUILT_KERNEL):
+	echo "Skipping Kernel."
+endif
+else
 kernelimage:
 endif
 
@@ -1008,6 +1018,7 @@ endif
 kernel_modules_src_list :=
 kernel_modules_dist_list :=
 
+ifneq ($(strip $(SKIP_KERNEL)),true)
 $(foreach cf,$(TARGET_KERNEL_MODULES),							\
 $(eval _src := $(call word-colon,1,$(cf)))						\
 $(eval _dest := $(call word-colon,2,$(cf)))						\
@@ -1029,6 +1040,10 @@ kernelmodules: $(TARGET_PREBUILT_KERNEL) | $(ACP)
 	@echo "install kernel modules: $(kernel_modules_src_list)"
 else
 kernelmodules:
+endif
+else
+kernelmodules:
+	echo "Skipping kernel modules."
 endif
 # ----------------------------------------------------------------
 # support ubifs rules:
