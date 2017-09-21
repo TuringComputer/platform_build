@@ -4,10 +4,13 @@ ifeq ($(HOST_OS),darwin)
 # nothing required here yet
 endif
 
+# Turing Computer: For Ubuntu 16.04, add -B line below
+# as described at http://oopsmonk.github.io/blog/2016/06/07/android-build-error-on-ubuntu-16-04-lts
 ifeq ($(HOST_OS),linux)
 CLANG_CONFIG_x86_LINUX_HOST_EXTRA_ASFLAGS := \
   --gcc-toolchain=$($(clang_2nd_arch_prefix)HOST_TOOLCHAIN_FOR_CLANG) \
   --sysroot=$($(clang_2nd_arch_prefix)HOST_TOOLCHAIN_FOR_CLANG)/sysroot \
+  -B$($(clang_2nd_arch_prefix)HOST_TOOLCHAIN_FOR_CLANG)/x86_64-linux/bin \
   -no-integrated-as
 
 CLANG_CONFIG_x86_LINUX_HOST_EXTRA_CFLAGS := \
